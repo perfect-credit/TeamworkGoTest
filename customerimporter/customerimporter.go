@@ -1,6 +1,7 @@
 package customerimporter
 
 import (
+	"bufio"
 	"encoding/csv"
 	"os"
 	"sort"
@@ -21,21 +22,31 @@ func ReadCustomers(filename string) (map[string]int, error) {
 	}
 	defer file.Close()
 
-	reader := csv.NewReader(file)
-	records, err := reader.ReadAll()
-	if err != nil {
+	reader := csv.NewReader(bufio.NewReader(file))
+	// Skip the header
+	if _, err := reader.Read(); err != nil {
 			return nil, err
 	}
 
 	domainCounts := make(map[string]int)
 
-	for _, record := range records[1:] { // Skip header
+	for {
+			record, err := reader.Read()
+			if err != nil {
+					break // End of file or an error
+			}
+
+			if len(record) < 3 {
+					continue // Skip records that don't have enough fields
+			}
+
 			email := record[2]
 			domain := extractDomain(email)
 			if domain != "" {
 					domainCounts[domain]++
 			}
 	}
+
 	return domainCounts, nil
 }
 
@@ -50,16 +61,24 @@ func extractDomain(email string) string {
 
 // SortDomains returns a sorted slice of DomainCount.
 func SortDomains(domainCounts map[string]int) []DomainCount {
-	var domains []DomainCount
-	for domain, count := range domainCounts {
-			domains = append(domains, DomainCount{Domain: domain, Count: count})
+	// Create a slice to hold the keys (domains)
+	domains := make([]string, 0, len(domainCounts))
+	
+	// Populate the slice with keys from the map
+	for domain := range domainCounts {
+			domains = append(domains, domain)
 	}
 
-	sort.Slice(domains, func(i, j int) bool {
-			return domains[i].Domain < domains[j].Domain
-	})
+	// Sort the slice of domains
+	sort.Strings(domains)
 
-	return domains
+	// Create a slice of DomainCount to hold the results
+	sortedDomainCounts := make([]DomainCount, len(domains))
+	for i, domain := range domains {
+			sortedDomainCounts[i] = DomainCount{Domain: domain, Count: domainCounts[domain]}
+	}
+
+	return sortedDomainCounts
 }
 
 

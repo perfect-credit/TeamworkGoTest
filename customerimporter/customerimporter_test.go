@@ -12,7 +12,9 @@ func TestExtractDomain(t *testing.T) {
     }{
         {"user@example.com", "example.com"},
         {"admin@domain.org", "domain.org"},
+        {"invalid-email", ""},
         {"user@sub.domain.com", "sub.domain.com"},
+        {"@missingusername.com", "missingusername.com"},
     }
 
     for _, test := range tests {
