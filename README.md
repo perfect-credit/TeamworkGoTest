@@ -42,14 +42,19 @@ Replace path/to/your/customers.csv with the actual path to your CSV file.
 
 ### CSV Format
 
-The CSV file should have a header row and at least one email column. For example:
+The CSV file should have a header row and 5 columns. For example:
 
 ```graphql
-Name,Email
-Alice,alice@example.com
-Bob,bob@example.com
-Charlie,charlie@domain.com
+first_name	   last_name	   email	                   gender	ip_address
+
+Mildred	      Hernandez	       mhernandez0@github.io	   Female	38.194.51.128
+Bonnie	      Ortiz	           bortiz1@cyberchimps.com	   Female	197.54.209.129
+Dennis	      Henry	           dhenry2@hubpages.com	       Male	    155.75.186.217
+Justin	      Hansen	       jhansen3@360.cn	           Male	    251.166.224.119
+
 ```
+
+But if some cells are empty, this project will find them.
 
 ### Example Output
 
@@ -67,11 +72,3 @@ To run the tests for the application, use the following command:
 ```bash
 go test ./...
 ```
-
-### Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or features you'd like to add.
-
-### License
-
-This project is licensed under the MIT License. See the LICENSE file for more details.
