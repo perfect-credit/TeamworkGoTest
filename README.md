@@ -44,17 +44,14 @@ Replace path/to/your/customers.csv with the actual path to your CSV file.
 
 The CSV file should have a header row and 5 columns. For example:
 
-```graphql
-first_name	   last_name	   email	                   gender	ip_address
+```bash
+first_name     last_name            email                            gender            ip_address
 
-Mildred	      Hernandez	       mhernandez0@github.io	   Female	38.194.51.128
-Bonnie	      Ortiz	           bortiz1@cyberchimps.com	   Female	197.54.209.129
-Dennis	      Henry	           dhenry2@hubpages.com	       Male	    155.75.186.217
-Justin	      Hansen	       jhansen3@360.cn	           Male	    251.166.224.119
-
+Mildred        Hernandez            mhernandez0@github.io            Female            38.194.51.128
+Bonnie         Ortiz                bortiz1@cyberchimps.com          Male              197.54.209.129
 ```
 
-But if some cells are empty, this project will find them.
+But if some cells are empty, this project will find them and output in invalid.csv.
 
 ### Example Output
 
