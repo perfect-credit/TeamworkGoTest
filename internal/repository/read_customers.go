@@ -1,189 +1,168 @@
 package repository
 
 import (
-	"bufio"
-	"encoding/csv"
-	"flag"
-	"fmt"
-	"os"
-	"regexp"
-	"strings"
+    "bufio"
+    "encoding/csv"
+    "flag"
+    "fmt"
+    "os"
+    "regexp"
+    "strings"
 )
 
-//Total Number of Column
-const	COLUMN_NUMBER = 5
+// Total Number of Columns
+const COLUMN_NUMBER = 5
 
+// GetValue retrieves a value from the record at the specified index.
 func GetValue(record []string, index int) string {
-	if index < len(record) && record[index] != "" {
-			return record[index]
-	}
-
-	return "null!"
+    if index < len(record) && record[index] != "" {
+        return record[index]
+    }
+    return "null!"
 }
-
 
 // ValidateEntry checks if the entry is valid according to the CSV structure.
-func ValidateEntry(record []string) error {	
-	if err := ValidateFirstName(record[0]); err != nil {
-			return err
-	}
+func ValidateEntry(record []string) error {
+    if len(record) < COLUMN_NUMBER {
+        return fmt.Errorf("invalid number of columns: got %d, want %d", len(record), COLUMN_NUMBER)
+    }
 
-	if err := ValidateLastName(record[1]); err != nil {
-			return err
-	}
+    validators := []func(string) error{
+        ValidateFirstName,
+        ValidateLastName,
+        ValidateEmail,
+        ValidateGender,
+        ValidateIPAddress,
+    }
 
-	if err := ValidateEmail(record[2]); err != nil {
-			return err
-	}
-
-	if err := ValidateGender(record[3]); err != nil {
-			return err
-	}
-
-	if err := ValidateIPAddress(record[4]); err != nil {
-			return err
-	}
-
-	return nil
+    for i, validator := range validators {
+        if err := validator(record[i]); err != nil {
+            return fmt.Errorf("column %d: %w", i+1, err)
+        }
+    }
+    return nil
 }
 
-// ValidateFirstName checks if the first name is valid (non-empty).
+// Validation functions for each field
 func ValidateFirstName(firstName string) error {
-	if firstName == "" {
-			return fmt.Errorf("first name cannot be empty")
-	}
-
-	return nil
+    if firstName == "" {
+        return fmt.Errorf("first name cannot be empty")
+    }
+    return nil
 }
 
-// ValidateLastName checks if the last name is valid (non-empty).
 func ValidateLastName(lastName string) error {
-	if lastName == "" {
-			return fmt.Errorf("last name cannot be empty")
-	}
-
-	return nil
+    if lastName == "" {
+        return fmt.Errorf("last name cannot be empty")
+    }
+    return nil
 }
 
-// ValidateEmail checks if the email is in a valid format.
 func ValidateEmail(email string) error {
-	const emailRegex = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-	re := regexp.MustCompile(emailRegex)
-	if !re.MatchString(email) {
-			return fmt.Errorf("invalid email format: %s", email)
-	}
-
-	return nil
+    const emailRegex = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+    if !regexp.MustCompile(emailRegex).MatchString(email) {
+        return fmt.Errorf("invalid email format: %s", email)
+    }
+    return nil
 }
 
-// ValidateGender checks if the gender is either "Male" or "Female".
 func ValidateGender(gender string) error {
-	if gender != "Male" && gender != "Female" {
-			return fmt.Errorf("invalid gender: %s, must be 'Male' or 'Female'", gender)
-	}
-
-	return nil
+    if gender != "Male" && gender != "Female" {
+        return fmt.Errorf("invalid gender: %s, must be 'Male' or 'Female'", gender)
+    }
+    return nil
 }
 
-// ValidateIPAddress checks if the IP address is in a valid format.
 func ValidateIPAddress(ip string) error {
-	const ipRegex = `^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$`
-	re := regexp.MustCompile(ipRegex)
+    const ipRegex = `^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$`
+    if !regexp.MustCompile(ipRegex).MatchString(ip) {
+        return fmt.Errorf("invalid IP address format: %s", ip)
+    }
 
-	if !re.MatchString(ip) {
-			return fmt.Errorf("invalid IP address format: %s", ip)
-	}
-
-	return nil
+    // Split IP into octets and validate each
+    octets := strings.Split(ip, ".")
+    for _, octet := range octets {
+        num := 0
+        fmt.Sscanf(octet, "%d", &num)
+        if num < 0 || num > 255 {
+            return fmt.Errorf("invalid IP octet value: %s", octet)
+        }
+    }
+    return nil
 }
 
-//ExtractDomain extracts the domain from an email address.
-func ExtractDomain(email string) (string) {
-	// Regular expression for validating an email
-	const emailRegex = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
-
-	// Compile the regex
-	re := regexp.MustCompile(emailRegex)
-	atIndex := strings.Index(email, "@")
-
-	// Check if the email matches the regex
-	if re.MatchString(email) {
-			return email[atIndex+1:] // Return the email if valid
-	}	
-	
-	return ""
+// ExtractDomain extracts the domain from an email address.
+func ExtractDomain(email string) string {
+    const emailRegex = `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+    if regexp.MustCompile(emailRegex).MatchString(email) {
+        atIndex := strings.Index(email, "@")
+        return email[atIndex+1:]
+    }
+    return ""
 }
 
 // ReadCustomers reads customer data from a CSV file and counts email domains.
 func ReadCustomers(filename string) (map[string]int, error) {
-		var rowNumber int = 0
+    var rowNumber int
+    domainCounts := make(map[string]int)
 
-		file, err := os.Open(filename)
+    file, err := os.Open(filename)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
 
-		if err != nil {
-				return nil, err
-		}
-		defer file.Close()
+    reader := csv.NewReader(bufio.NewReader(file))
+    invalidFile := flag.String("invalid", "./data/invalid.csv", "Invalid CSV file")
+    flag.Parse()
 
-		reader := csv.NewReader(bufio.NewReader(file))
-		
-		domainCounts := make(map[string]int)
-		
-		//Name invalid file as invalid.csv
-		invalidFile := flag.String("invalid", "./data/invalid.csv", "Invalid CSV file")
+    invalidFileHandler, err := os.Create(*invalidFile)
+    if err != nil {
+        return nil, fmt.Errorf("error creating invalid file: %w", err)
+    }
+    defer invalidFileHandler.Close()
 
-		flag.Parse()
-		
-		//Create invalid.csv
-		if *invalidFile != "" {
-				invalid_file, _ := os.Create(*invalidFile)
-				_, _ = fmt.Fprintf(invalid_file, "row, first_name,last_name,email,gender,ip_address\n")
+    // Write header to invalid file
+    _, _ = fmt.Fprintf(invalidFileHandler, "row,first_name,last_name,email,gender,ip_address\n")
 
-				for {
-						rowNumber++
-						record, err := reader.Read()
+    for {
+        rowNumber++
+        record, err := reader.Read()
 
-						//Handle reading errors
-						if err != nil {
-								if err.Error() == "EOF" {
-										break
-								}
+        // Handle reading errors
+        if err != nil {
+            if err.Error() == "EOF" {
+                break
+            }
+            logInvalidRow(invalidFileHandler, rowNumber, record)
+            continue
+        }
 
-								fmt.Fprintf(invalid_file, "%d, ",	rowNumber,)
+        // Skip header row
+        if rowNumber == 1 {
+            continue
+        }
 
-								for i := 0; i < COLUMN_NUMBER - 1; i++ {
-										fmt.Fprintf(invalid_file, "%s,",	GetValue(record, i))								
-								}
-								fmt.Fprintf(invalid_file, "%s\n",	GetValue(record, COLUMN_NUMBER - 1))
+        // Validate entry
+        if err := ValidateEntry(record); err != nil {
+            logInvalidRow(invalidFileHandler, rowNumber, record)
+            continue
+        }
 
-								continue
-						}
+        email := record[2]
+        domain := ExtractDomain(email)
+        if domain != "" {
+            domainCounts[domain]++
+        }
+    }
+    return domainCounts, nil
+}
 
-						//Header pass
-						if rowNumber == 1 {
-								continue
-						}
-
-						typeCompare := ValidateEntry(record)
-						if typeCompare != nil {
-							fmt.Fprintf(invalid_file, "%d, ",	rowNumber,)
-
-							for i:=0; i < COLUMN_NUMBER - 1; i++ {
-									fmt.Fprintf(invalid_file, "%s,",	record[i])								
-							}
-							fmt.Fprintf(invalid_file, "%s\n",	record[COLUMN_NUMBER - 1])				
-								
-							continue
-						}	
-
-						email := record[2]
-						domain := ExtractDomain(email)
-
-						if domain != "" {
-								domainCounts[domain]++
-						}
-				}
-		}
-
-		return domainCounts, nil
+// logInvalidRow logs invalid rows to the invalid CSV file.
+func logInvalidRow(file *os.File, rowNumber int, record []string) {
+    fmt.Fprintf(file, "%d,", rowNumber)
+    for i := 0; i < COLUMN_NUMBER; i++ {
+        fmt.Fprintf(file, "%s,", GetValue(record, i))
+    }
+    fmt.Fprintln(file)
 }

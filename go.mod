@@ -1,3 +1,3 @@
-module customer_importer
+module TeamworkGoTest
 
 go 1.21

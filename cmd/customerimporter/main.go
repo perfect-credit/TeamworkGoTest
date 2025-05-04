@@ -6,21 +6,36 @@ import (
 	"log"
 	"os"
 
-	"github.com/perfect-credit/teamworkGoTest/internal/repository"
+	"TeamworkGoTest/internal/repository"
+	"TeamworkGoTest/internal/service"
 )
 
 func main() {
 		inputFile := flag.String("input", "", "Input CSV file")
 		outputFile := flag.String("output", "", "Output CSV file")
+		sortBy := flag.String("sort", "domain", "sort by 'domain' or 'count'")
 		flag.Parse()
 
 		domainCounts, err := repository.ReadCustomers(*inputFile)
+		
 		if err != nil {
 				log.Fatalf("Error reading customers: %v", err)
 		}
 
-		sortedDomains := repository.SortDomains(domainCounts)
-		if *outputFile != "" {
+		var sortedDomains []service.DomainCount
+		switch *sortBy {
+		case "domain":
+				sortedDomains = service.SortByDomain(domainCounts)
+				fmt.Println("Sorted by domain:")
+		case "count":
+				sortedDomains = service.SortByCount(domainCounts)
+				fmt.Println("Sorted by Count:")
+		default:
+				fmt.Println("Invalid sort option. Use 'domain' or 'count'.")
+				return
+		}
+		
+		if *outputFile != "" {			
 				file, err := os.Create(*outputFile)
 				if err != nil {
 						log.Fatalf("Error creating output file: %v", err)
@@ -36,7 +51,6 @@ func main() {
 				}
 		} else {
 				_, _ = fmt.Printf("domain: count\n")
-				
 				for _, domainCount := range sortedDomains {
 						fmt.Printf("%s: %d\n", domainCount.Domain, domainCount.Count)
 				}
