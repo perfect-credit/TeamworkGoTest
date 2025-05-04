@@ -1,3 +1,3 @@
-module customerimporter
+module customer_importer
 
-go 1.24.2
+go 1.21

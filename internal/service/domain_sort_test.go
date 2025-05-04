@@ -1,8 +1,10 @@
-package customerimporter
+package service
 
 import (
 	"os"
 	"testing"
+
+	"github.com/perfect-credit/teamworkGoTest/internal/repository"
 )
 
 func TestReadCustomers(t *testing.T) {
@@ -27,7 +29,7 @@ Invalid,User,invalid-email,Female,256.256.256.256
 	file.Close()
 
 	// Call ReadCustomers
-	domainCounts, err := ReadCustomers(testCSV)
+	domainCounts, err := repository.ReadCustomers(testCSV)
 	if err != nil {
 		t.Fatalf("Error reading customers: %v", err)
 	}
@@ -45,7 +47,7 @@ Invalid,User,invalid-email,Female,256.256.256.256
 	}
 
 	// Check for invalid entries in invalid.csv
-	invalidFile := "invalid.csv"
+	invalidFile := "../data/invalid.csv"
 	if _, err := os.Stat(invalidFile); os.IsNotExist(err) {
 		t.Errorf("Invalid file not created")
 	}
@@ -81,3 +83,5 @@ func TestSortDomains(t *testing.T) {
 		t.Errorf("Expected first domain to be 'cyberchimps.com', got '%s'", sortedDomains[0].Domain)
 	}
 }
+
+

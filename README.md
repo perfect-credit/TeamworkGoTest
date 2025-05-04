@@ -1,6 +1,6 @@
 # TeamworkGoTest
 
-A simple Go application to read customer data from a CSV file, count email domains, and sort the counts. This tool is designed to efficiently handle large datasets.
+A simple Go application to read customer data from a CSV file, counts the occurrences of each email domain, and outputs the sorted list of domains along with their respective counts. This tool is designed to efficiently handle large datasets.
 
 ## Features
 
@@ -27,7 +27,7 @@ A simple Go application to read customer data from a CSV file, count email domai
 2. Build the application:
 
    ```bash
-   go build
+   go build -o main.exe ./cmd/myapp
    ```
 
 ### Usage
@@ -35,7 +35,7 @@ A simple Go application to read customer data from a CSV file, count email domai
 To run the application, use the following command:
 
 ```bash
-go run main.go path/to/your/customers.csv
+.\main.exe -input .\data\customers.csv -output .\data\output.csv
 ```
 
 Replace path/to/your/customers.csv with the actual path to your CSV file.
@@ -51,7 +51,14 @@ Mildred        Hernandez            mhernandez0@github.io            Female     
 Bonnie         Ortiz                bortiz1@cyberchimps.com          Male              197.54.209.129
 ```
 
-But if some cells are empty, this project will find them and output in invalid.csv.
+However, if some cells are empty or their data types don't match the data context, this project outputs those rows to data/invalid.csv.
+
+```bash
+row   first_name     last_name            email                            gender            ip_address
+
+8     Mildred        Hernandez            github.io                        Female            38.194.51.128
+15    Bonnie                              bortiz1@cyberchimps.com          Male              197.54.209.129
+```
 
 ### Example Output
 

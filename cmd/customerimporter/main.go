@@ -1,24 +1,25 @@
 package main
 
 import (
-	"customerimporter/customerimporter"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/perfect-credit/teamworkGoTest/internal/repository"
 )
 
 func main() {
-		inputFile := flag.String("input", "customers.csv", "Input CSV file")
+		inputFile := flag.String("input", "", "Input CSV file")
 		outputFile := flag.String("output", "", "Output CSV file")
 		flag.Parse()
 
-		domainCounts, err := customerimporter.ReadCustomers(*inputFile)
+		domainCounts, err := repository.ReadCustomers(*inputFile)
 		if err != nil {
 				log.Fatalf("Error reading customers: %v", err)
 		}
 
-		sortedDomains := customerimporter.SortDomains(domainCounts)
+		sortedDomains := repository.SortDomains(domainCounts)
 		if *outputFile != "" {
 				file, err := os.Create(*outputFile)
 				if err != nil {
