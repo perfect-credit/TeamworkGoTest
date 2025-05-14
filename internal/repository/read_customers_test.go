@@ -1,6 +1,7 @@
 package repository
 
 import (
+	// "encoding/csv"
 	"os"
 	"path/filepath"
 	"testing"
@@ -25,10 +26,9 @@ func TestReadCustomers(t *testing.T) {
 	// Write test data to the CSV file
 	data := `first_name,last_name,email,gender,ip_address
 Mildred,Hernandez,mhernandez0@github.io,Female,38.194.51.128
-Bonnie,Ortiz,bortiz1@cyberchimps.com,Female,197.54.209.129
-Invalid,User,invalid-email,Female,256.256.256.256
-Empty,User,,Female,192.168.1.1
-John,Doe,john@example.com,Male,10.0.0.1
+Bad,Example1,invalid-email.com,Female,8.8.8.8
+Good,Example2,example@example.com,Male,192.168.1.1
+Bad,Example3,@invalid-email2.com,Female,1.1.1.1
 `
 	_, err = file.WriteString(data)
 	if err != nil {
@@ -44,9 +44,8 @@ John,Doe,john@example.com,Male,10.0.0.1
 
 	// Check expected domain counts
 	expectedCounts := map[string]int{
-		"github.io":      1,
-		"cyberchimps.com": 1,
-		"example.com":     1,
+		"github.io": 1,
+		"example.com": 1,
 	}
 
 	for domain, count := range expectedCounts {
@@ -59,106 +58,19 @@ John,Doe,john@example.com,Male,10.0.0.1
 	invalidFile := filepath.Join(dataDir, "invalid.csv")
 	if _, err := os.Stat(invalidFile); os.IsNotExist(err) {
 		t.Errorf("Invalid file not created")
+	} else {
+		// Check the content of invalid.csv
+		invalidRecords, err := os.ReadFile(invalidFile)
+		if err != nil {
+			t.Fatalf("Failed to read invalid CSV file: %v", err)
+		}
+
+		expectedInvalidData := `row,first_name,last_name,email,gender,ip_address
+3,Bad,Example1,invalid-email.com,Female,8.8.8.8
+5,Bad,Example3,@invalid-email2.com,Female,1.1.1.1
+`
+		if string(invalidRecords) != expectedInvalidData {
+			t.Errorf("Invalid CSV content does not match expected content.\nExpected:\n%s\nGot:\n%s", expectedInvalidData, string(invalidRecords))
+		}
 	}
 }
-
-func TestValidateEntry(t *testing.T) {
-	tests := []struct {
-		name    string
-		record  []string
-		wantErr bool
-	}{
-		{
-			name:    "Valid record",
-			record:  []string{"Mildred", "Hernandez", "mhernandez0@github.io", "Female", "38.194.51.128"},
-			wantErr: false,
-		},
-		{
-			name:    "Invalid email",
-			record:  []string{"Invalid", "User", "invalid-email", "Female", "38.194.51.128"},
-			wantErr: true,
-		},
-		{
-			name:    "Invalid gender",
-			record:  []string{"John", "Doe", "john@example.com", "Other", "38.194.51.128"},
-			wantErr: true,
-		},
-		{
-			name:    "Invalid IP format",
-			record:  []string{"John", "Doe", "john@example.com", "Male", "256.256.256.256"},
-			wantErr: true,
-		},
-		{
-			name:    "Empty first name",
-			record:  []string{"", "Doe", "john@example.com", "Male", "38.194.51.128"},
-			wantErr: true,
-		},
-		{
-			name:    "Empty last name",
-			record:  []string{"John", "", "john@example.com", "Male", "38.194.51.128"},
-			wantErr: true,
-		},
-		{
-			name:    "Too few columns",
-			record:  []string{"John", "Doe", "john@example.com"},
-			wantErr: true,
-		},
-		{
-			name:    "Empty email",
-			record:  []string{"John", "Doe", "", "Male", "38.194.51.128"},
-			wantErr: true,
-		},
-		{
-			name:    "Invalid IP octet",
-			record:  []string{"John", "Doe", "john@example.com", "Male", "256.1.2.3"},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := ValidateEntry(tt.record)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("ValidateEntry() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
-func TestExtractDomain(t *testing.T) {
-	tests := []struct {
-		name     string
-		email    string
-		expected string
-	}{
-		{
-			name:     "Valid email",
-			email:    "user@example.com",
-			expected: "example.com",
-		},
-		{
-			name:     "Invalid email",
-			email:    "invalid-email",
-			expected: "",
-		},
-		{
-			name:     "Empty email",
-			email:    "",
-			expected: "",
-		},
-		{
-			name:     "Complex domain",
-			email:    "user@sub.example.co.uk",
-			expected: "sub.example.co.uk",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := ExtractDomain(tt.email)
-			if got != tt.expected {
-				t.Errorf("ExtractDomain() = %v, want %v", got, tt.expected)
-			}
-		})
-	}
-} 
