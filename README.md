@@ -41,16 +41,16 @@ A simple Go application to read customer data from a CSV file, counts the occurr
 To display in terminal, use the following command:
 
 ```bash
-   .\main.exe -input .\data\customers.csv
-   .\main.exe -input .\data\customers.csv -sort domain
-   .\main.exe -input .\data\customers.csv -sort count
+   ./main.exe -input ./data/customers.csv
+   ./main.exe -input ./data/customers.csv -sort domain
+   ./main.exe -input ./data/customers.csv -sort count
 ```
 
 To run the application, use the following command:
 
 ```bash
-   .\main.exe -input .\data\customers.csv -sort domain -output .\data\output.csv
-   .\main.exe -input .\data\customers.csv -sort count -output .\data\output.csv
+   ./main.exe -input ./data/customers.csv -sort domain -output ./data/output.csv
+   ./main.exe -input ./data/customers.csv -sort count -output ./data/output.csv
 ```
 
 Replace path/to/your/customers.csv with the actual path to your CSV file.
